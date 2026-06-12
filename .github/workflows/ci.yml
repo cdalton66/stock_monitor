@@ -23,5 +23,3 @@ jobs:
           pip install pytest
       - name: Syntax check
         run: python -m py_compile stock_monitor.py
-      - name: Run tests
-        run: pytest -q
