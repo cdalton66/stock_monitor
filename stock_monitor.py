@@ -7,19 +7,13 @@ import config
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
-# single gauge with a symbol label to avoid creating many metrics dynamically
-stock_gauge = Gauge('stock_price', 'Current stock price for a symbol', ['symbol'])
-
-# normalize config values
-STOCK_API_ENDPOINT = config.STOCK_API_ENDPOINT.rstrip('/') + '/'
-STOCKS = [s.strip() for s in config.STOCK_LIST if s and str(s).strip()]
 
 
-def _fetch_price(symbol):
+def _fetch_price(symbol, endpoint):
 	symbol = str(symbol).strip()
 	if not symbol:
 		return None
-	url = STOCK_API_ENDPOINT + symbol
+	url = endpoint + symbol
 	logging.debug('Fetching stock price from URL: %s', url)
 	headers = {
 		'Accept': 'application/json',
@@ -77,10 +71,14 @@ def _fetch_price(symbol):
 		logging.warning('Could not parse price for %s (response length %d)', symbol, len(text))
 		return None
 
-def poll_loop(poll_interval=30):
+def poll_loop(stocks,poll_interval=30):
+	# single gauge with a symbol label to avoid creating many metrics dynamically
+	stock_gauge = Gauge('stock_price', 'Current stock price for a symbol', ['symbol'])
+	stocks_api_endpoint = config.STOCK_API_ENDPOINT.rstrip('/') + '/'
 	while True:
-		for symbol in STOCKS:
-			price = _fetch_price(symbol)
+		for symbol in stocks:
+			price = _fetch_price(symbol, stocks_api_endpoint)
+			time.sleep(1)  # small delay between API calls to avoid hitting rate limits
 			if price is not None:
 				stock_gauge.labels(symbol=symbol).set(price)
 				logging.info('Updated %s = %s', symbol, price)
@@ -89,10 +87,11 @@ def poll_loop(poll_interval=30):
 		time.sleep(poll_interval)
 
 def main():
-	POLL_INTERVAL = round(24 / (config.MAX_API_CALLS_PER_DAY / len(STOCKS))) * 3600  # seconds between calls to stay within daily limit
+	stocks = [s.strip() for s in config.STOCK_LIST if s and str(s).strip()]
+	POLL_INTERVAL = round(24 / (config.MAX_API_CALLS_PER_DAY / len(stocks))) * 3600  # seconds between calls to stay within daily limit
 	start_http_server(config.PROMETHEUS_PORT)
 	logging.info('Prometheus metrics server started on port %s', config.PROMETHEUS_PORT)
-	poll_loop(POLL_INTERVAL)
+	poll_loop(stocks, POLL_INTERVAL)
 
 if __name__ == '__main__':
 	main()

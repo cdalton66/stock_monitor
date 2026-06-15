@@ -43,3 +43,28 @@ This project includes a GitHub Actions workflow that runs a simple syntax check 
 Contributing
 
 Contributions welcome — please open an issue or PR.
+
+Docker
+------
+
+Build and run the service with Docker:
+
+```bash
+docker build -t stock_monitor:latest .
+docker run -d --name stock-monitor -p 9090:9090 \
+	-e STOCK_API_ENDPOINT="http://host.docker.internal:5001/api/stock/" \
+	-e STOCK_LIST="AAPL,AVGO,GOOGL,MSFT,NVDA" \
+	stock_monitor:latest
+```
+
+Or use Docker Compose (recommended for local development on macOS):
+
+```bash
+docker-compose up -d --build
+```
+
+Check metrics:
+
+```bash
+curl http://localhost:9090/metrics
+```
