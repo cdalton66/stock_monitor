@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  stock-monitor:
+    build: .
+    image: stock_monitor:latest
+    ports:
+      - "9090:9090"
+    environment:
+      - PROMETHEUS_PORT=9090
+      - STOCK_API_ENDPOINT=http://host.docker.internal:5001/api/stock/
+      - STOCK_LIST=AAPL,AVGO,GOOGL,MSFT,NVDA
+    restart: unless-stopped
