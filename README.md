@@ -40,10 +40,6 @@ CI
 
 This project includes a GitHub Actions workflow that runs a simple syntax check and tests on pushes and pull requests.
 
-Contributing
-
-Contributions welcome — please open an issue or PR.
-
 Docker
 ------
 
